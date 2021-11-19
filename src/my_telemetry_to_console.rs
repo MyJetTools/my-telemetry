@@ -4,6 +4,7 @@ pub struct MyTelemetryToConsole {}
 
 impl MyTelemetry for MyTelemetryToConsole {
     fn track_url_duration(
+        &self,
         method: hyper::Method,
         uri: hyper::Uri,
         http_code: u16,
@@ -16,6 +17,7 @@ impl MyTelemetry for MyTelemetryToConsole {
     }
 
     fn track_dependency_duration(
+        &self,
         dependency_name: String,
         method: hyper::Method,
         uri: hyper::Uri,
