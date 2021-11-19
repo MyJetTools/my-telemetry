@@ -18,15 +18,15 @@ impl MyTelemetry for MyTelemetryToConsole {
 
     fn track_dependency_duration(
         &self,
-        dependency_name: String,
-        method: hyper::Method,
-        uri: hyper::Uri,
+        host: String,
+        protocol: String,
+        resource: String,
         success: bool,
         duration: std::time::Duration,
     ) {
         println!(
             "Dependency {} duration: {} {} Success:{} Duration:{:?}",
-            dependency_name, method, uri, success, duration
+            host, protocol, resource, success, duration
         );
     }
 }

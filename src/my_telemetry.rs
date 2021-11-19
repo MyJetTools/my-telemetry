@@ -11,9 +11,9 @@ pub trait MyTelemetry {
 
     fn track_dependency_duration(
         &self,
-        dependency_name: String,
-        method: hyper::Method,
-        uri: hyper::Uri,
+        host: String,
+        protocol: String,
+        resource: String,
         success: bool,
         duration: Duration,
     );
