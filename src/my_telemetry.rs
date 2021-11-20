@@ -11,9 +11,9 @@ pub trait MyTelemetry {
 
     fn track_dependency_duration(
         &self,
-        host: String,
-        resource_type: String,
-        resource: String,
+        name: String,
+        dependency_type: String,
+        target: String,
         success: bool,
         duration: Duration,
     );
