@@ -12,7 +12,7 @@ pub trait MyTelemetry {
     fn track_dependency_duration(
         &self,
         host: String,
-        protocol: String,
+        resource_type: String,
         resource: String,
         success: bool,
         duration: Duration,

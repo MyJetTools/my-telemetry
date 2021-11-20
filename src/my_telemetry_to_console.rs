@@ -20,13 +20,13 @@ impl MyTelemetry for MyTelemetryToConsole {
         &self,
         host: String,
         protocol: String,
-        resource: String,
+        resource_type: String,
         success: bool,
         duration: std::time::Duration,
     ) {
         println!(
             "Dependency {} duration: {} {} Success:{} Duration:{:?}",
-            host, protocol, resource, success, duration
+            host, protocol, resource_type, success, duration
         );
     }
 }
