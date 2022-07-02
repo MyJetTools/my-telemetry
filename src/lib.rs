@@ -2,8 +2,24 @@ mod my_telemetry_event;
 use std::sync::atomic::AtomicBool;
 mod telemetry_collector;
 pub use my_telemetry_event::TelemetryEvent;
+use rust_extensions::date_time::DateTimeAsMicroseconds;
 pub use telemetry_collector::TelemtryCollector;
 use tokio::sync::Mutex;
+
+pub struct MyTelemetryContext {
+    pub process_id: i64,
+}
+
+impl MyTelemetryContext {
+    pub fn new() -> Self {
+        Self {
+            process_id: DateTimeAsMicroseconds::now().unix_microseconds,
+        }
+    }
+    pub fn restore(process_id: i64) -> Self {
+        Self { process_id }
+    }
+}
 
 pub struct TelemetryInterface {
     pub telemetry_collector: Mutex<TelemtryCollector>,
