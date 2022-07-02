@@ -6,6 +6,7 @@ use rust_extensions::date_time::DateTimeAsMicroseconds;
 pub use telemetry_collector::TelemtryCollector;
 use tokio::sync::Mutex;
 
+#[derive(Debug, Clone, Copy)]
 pub struct MyTelemetryContext {
     pub process_id: i64,
 }
@@ -37,6 +38,11 @@ impl TelemetryInterface {
     pub fn is_telemetry_set_up(&self) -> bool {
         self.writer_is_set
             .load(std::sync::atomic::Ordering::Relaxed)
+    }
+
+    pub async fn write_telemetry_event(&self, event: TelemetryEvent) {
+        let mut write_access = self.telemetry_collector.lock().await;
+        write_access.write(event)
     }
 }
 
