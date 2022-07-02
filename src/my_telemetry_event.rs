@@ -3,6 +3,6 @@ pub struct TelemetryEvent {
     pub started: i64,
     pub finished: i64,
     pub data: String,
-    pub success: bool,
-    pub status_code: i32,
+    pub success: Option<String>,
+    pub fail: Option<String>,
 }
