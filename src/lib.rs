@@ -25,7 +25,7 @@ impl TelemetryInterface {
 }
 
 lazy_static::lazy_static! {
-    static ref TELEMETRY_INTERFACE: TelemetryInterface = {
+    pub static ref TELEMETRY_INTERFACE: TelemetryInterface = {
         TelemetryInterface{
             telemetry_collector: Mutex::new(TelemtryCollector::new()),
             writer_is_set: AtomicBool::new(false),
