@@ -3,30 +3,18 @@ use crate::MyTelemetry;
 pub struct MyTelemetryToConsole {}
 
 impl MyTelemetry for MyTelemetryToConsole {
-    fn track_url_duration(
+    fn track(
         &self,
-        method: hyper::Method,
-        uri: hyper::Uri,
-        http_code: u16,
-        duration: std::time::Duration,
-    ) {
-        println!(
-            "Url duration: {} {} Status code:{} Duration:{:?}",
-            method, uri, http_code, duration
-        );
-    }
-
-    fn track_dependency_duration(
-        &self,
-        name: String,
-        dependency_type: String,
-        target: String,
+        process_id: i64,
+        started: i64,
+        finished: i64,
+        data: String,
         success: bool,
-        duration: std::time::Duration,
+        status_code: i32,
     ) {
         println!(
-            "Dependency {} duration: {} {} Success:{} Duration:{:?}",
-            name, dependency_type, target, success, duration
+            "MyTelemetryToConsole: process_id: {}, started: {}, finished: {}, data: {}, success: {}, status_code: {}",
+            process_id, started, finished, data, success, status_code
         );
     }
 }

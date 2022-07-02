@@ -1,20 +1,11 @@
-use std::time::Duration;
-
 pub trait MyTelemetry {
-    fn track_url_duration(
+    fn track(
         &self,
-        method: hyper::Method,
-        uri: hyper::Uri,
-        http_code: u16,
-        duration: Duration,
-    );
-
-    fn track_dependency_duration(
-        &self,
-        name: String,
-        dependency_type: String,
-        target: String,
+        process_id: i64,
+        started: i64,
+        finished: i64,
+        data: String,
         success: bool,
-        duration: Duration,
+        status_code: i32,
     );
 }
