@@ -5,4 +5,5 @@ pub struct TelemetryEvent {
     pub data: String,
     pub success: Option<String>,
     pub fail: Option<String>,
+    pub ip: Option<String>,
 }
