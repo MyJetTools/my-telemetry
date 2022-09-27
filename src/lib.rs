@@ -45,7 +45,7 @@ impl Drop for EventDurationTracker {
                     started: self.started.unix_microseconds,
                     finished: DateTimeAsMicroseconds::now().unix_microseconds,
                     data: event_name.to_string(),
-                    success: Some("Done".to_string()),
+                    success: Some("Duration tracking".to_string()),
                     fail: None,
                     ip: None,
                 };
