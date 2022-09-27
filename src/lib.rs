@@ -20,6 +20,41 @@ impl MyTelemetryContext {
     pub fn restore(process_id: i64) -> Self {
         Self { process_id }
     }
+
+    pub fn start_event_tracking(&self, event_name: String) -> EventDurationTracker {
+        EventDurationTracker {
+            process_id: self.process_id,
+            event_name: Some(event_name),
+            started: DateTimeAsMicroseconds::now(),
+        }
+    }
+}
+
+pub struct EventDurationTracker {
+    pub process_id: i64,
+    pub event_name: Option<String>,
+    pub started: DateTimeAsMicroseconds,
+}
+
+impl Drop for EventDurationTracker {
+    fn drop(&mut self) {
+        if crate::TELEMETRY_INTERFACE.is_telemetry_set_up() {
+            if let Some(event_name) = self.event_name.take() {
+                let event = TelemetryEvent {
+                    process_id: self.process_id,
+                    started: self.started.unix_microseconds,
+                    finished: DateTimeAsMicroseconds::now().unix_microseconds,
+                    data: event_name.to_string(),
+                    success: Some("Done".to_string()),
+                    fail: None,
+                    ip: None,
+                };
+                tokio::spawn(
+                    async move { crate::TELEMETRY_INTERFACE.write_telemetry_event(event) },
+                );
+            }
+        }
+    }
 }
 
 pub struct TelemetryInterface {
