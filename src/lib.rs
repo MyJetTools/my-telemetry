@@ -57,6 +57,14 @@ impl TelemetryInterface {
         let mut write_access = self.telemetry_collector.lock().await;
         write_access.write(event)
     }
+
+    pub async fn write_telemetry_events(&self, events: Vec<TelemetryEvent>) {
+        let mut write_access = self.telemetry_collector.lock().await;
+
+        for event in events {
+            write_access.write(event);
+        }
+    }
 }
 
 lazy_static::lazy_static! {
