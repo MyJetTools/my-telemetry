@@ -8,25 +8,51 @@ pub use my_telemetry_event::TelemetryEvent;
 use rust_extensions::date_time::DateTimeAsMicroseconds;
 pub use telemetry_collector::TelemtryCollector;
 use tokio::sync::Mutex;
+#[derive(Debug, Clone)]
+pub enum MyTelemetryContext {
+    Single(i64),
+    Multiple(Vec<i64>),
+}
 
-#[derive(Debug, Clone, Copy)]
-pub struct MyTelemetryContext {
-    pub process_id: i64,
+impl MyTelemetryContext {
+    pub fn merge_process(&mut self, other: &MyTelemetryContext) {
+        match self {
+            MyTelemetryContext::Single(id) => {
+                let mut new_ids = Vec::new();
+                new_ids.push(*id);
+                match other {
+                    MyTelemetryContext::Single(other_id) => {
+                        new_ids.push(*other_id);
+                    }
+                    MyTelemetryContext::Multiple(other_ids) => {
+                        new_ids.extend_from_slice(other_ids);
+                    }
+                }
+                *self = MyTelemetryContext::Multiple(new_ids);
+            }
+            MyTelemetryContext::Multiple(ids) => match other {
+                MyTelemetryContext::Single(other_id) => {
+                    ids.push(*other_id);
+                }
+                MyTelemetryContext::Multiple(other_ids) => {
+                    ids.extend_from_slice(other_ids);
+                }
+            },
+        }
+    }
 }
 
 impl MyTelemetryContext {
     pub fn new() -> Self {
-        Self {
-            process_id: DateTimeAsMicroseconds::now().unix_microseconds,
-        }
+        Self::Single(DateTimeAsMicroseconds::now().unix_microseconds)
     }
     pub fn restore(process_id: i64) -> Self {
-        Self { process_id }
+        Self::Single(process_id)
     }
 
     pub fn start_event_tracking(&self, event_name: String) -> EventDurationTracker {
         EventDurationTracker {
-            process_id: self.process_id,
+            process_id: self.clone(),
             event_name: Some(event_name),
             started: DateTimeAsMicroseconds::now(),
             ok_result: None,

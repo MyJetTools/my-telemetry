@@ -1,9 +1,9 @@
 use rust_extensions::date_time::DateTimeAsMicroseconds;
 
-use crate::TelemetryEvent;
+use crate::{MyTelemetryContext, TelemetryEvent};
 
 pub struct EventDurationTracker {
-    pub process_id: i64,
+    pub process_id: MyTelemetryContext,
     pub event_name: Option<String>,
     pub started: DateTimeAsMicroseconds,
     pub ok_result: Option<String>,
@@ -33,18 +33,42 @@ impl Drop for EventDurationTracker {
             }
 
             if let Some(event_name) = self.event_name.take() {
-                let event = TelemetryEvent {
-                    process_id: self.process_id,
-                    started: self.started.unix_microseconds,
-                    finished: DateTimeAsMicroseconds::now().unix_microseconds,
-                    data: event_name.to_string(),
-                    success,
-                    fail,
-                    ip: None,
-                };
-                tokio::spawn(
-                    async move { crate::TELEMETRY_INTERFACE.write_telemetry_event(event) },
-                );
+                match &self.process_id {
+                    MyTelemetryContext::Single(process_id) => {
+                        let event = TelemetryEvent {
+                            process_id: *process_id,
+                            started: self.started.unix_microseconds,
+                            finished: DateTimeAsMicroseconds::now().unix_microseconds,
+                            data: event_name.to_string(),
+                            success,
+                            fail,
+                            ip: None,
+                        };
+                        tokio::spawn(async move {
+                            crate::TELEMETRY_INTERFACE.write_telemetry_event(event)
+                        });
+                    }
+                    MyTelemetryContext::Multiple(ids) => {
+                        let mut events = Vec::with_capacity(ids.len());
+
+                        for process_id in ids {
+                            let event = TelemetryEvent {
+                                process_id: *process_id,
+                                started: self.started.unix_microseconds,
+                                finished: DateTimeAsMicroseconds::now().unix_microseconds,
+                                data: event_name.to_string(),
+                                success: success.clone(),
+                                fail: fail.clone(),
+                                ip: None,
+                            };
+
+                            events.push(event);
+                        }
+                        tokio::spawn(async move {
+                            crate::TELEMETRY_INTERFACE.write_telemetry_events(events)
+                        });
+                    }
+                }
             }
         }
     }
