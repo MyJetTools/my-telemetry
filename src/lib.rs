@@ -18,6 +18,21 @@ impl MyTelemetryContext {
     pub fn new() -> Self {
         Self::Single(DateTimeAsMicroseconds::now().unix_microseconds)
     }
+
+    pub fn compile<'s, TIter: Iterator<Item = &'s MyTelemetryContext>>(items: TIter) -> Self {
+        let mut result: Option<MyTelemetryContext> = None;
+
+        for item in items {
+            if let Some(ctx) = &mut result {
+                ctx.merge_process(item);
+            } else {
+                result = Some(item.clone());
+            }
+        }
+
+        result.unwrap()
+    }
+
     pub fn restore(process_id: i64) -> Self {
         Self::Single(process_id)
     }
