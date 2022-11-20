@@ -15,6 +15,13 @@ pub enum MyTelemetryContext {
 }
 
 impl MyTelemetryContext {
+    pub fn new() -> Self {
+        Self::Single(DateTimeAsMicroseconds::now().unix_microseconds)
+    }
+    pub fn restore(process_id: i64) -> Self {
+        Self::Single(process_id)
+    }
+
     pub fn merge_process(&mut self, other: &MyTelemetryContext) {
         match self {
             MyTelemetryContext::Single(id) => {
@@ -40,15 +47,6 @@ impl MyTelemetryContext {
             },
         }
     }
-}
-
-impl MyTelemetryContext {
-    pub fn new() -> Self {
-        Self::Single(DateTimeAsMicroseconds::now().unix_microseconds)
-    }
-    pub fn restore(process_id: i64) -> Self {
-        Self::Single(process_id)
-    }
 
     pub fn start_event_tracking(&self, event_name: String) -> EventDurationTracker {
         EventDurationTracker {
@@ -57,6 +55,42 @@ impl MyTelemetryContext {
             started: DateTimeAsMicroseconds::now(),
             ok_result: None,
             fail_result: None,
+        }
+    }
+}
+
+impl<'s> IntoIterator for &'s MyTelemetryContext {
+    type Item = i64;
+
+    type IntoIter = TelemetryContextIterator<'s>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        Self::IntoIter { ctx: self, pos: 0 }
+    }
+}
+
+pub struct TelemetryContextIterator<'s> {
+    ctx: &'s MyTelemetryContext,
+    pos: usize,
+}
+
+impl<'s> Iterator for TelemetryContextIterator<'s> {
+    type Item = i64;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        match self.ctx {
+            MyTelemetryContext::Single(id) => {
+                if self.pos > 0 {
+                    return None;
+                }
+                let result = *id;
+                self.pos += 1;
+                return Some(result);
+            }
+            MyTelemetryContext::Multiple(ids) => {
+                let result = ids.get(self.pos)?;
+                return Some(*result);
+            }
         }
     }
 }
