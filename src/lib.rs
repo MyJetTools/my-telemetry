@@ -113,6 +113,114 @@ impl TelemetryInterface {
             .load(std::sync::atomic::Ordering::Relaxed)
     }
 
+    pub async fn write_success(
+        &self,
+        ctx: &MyTelemetryContext,
+        started: DateTimeAsMicroseconds,
+        data: &str,
+        success: &str,
+        ip: Option<&str>,
+    ) {
+        if !self.is_telemetry_set_up() {
+            return;
+        }
+
+        match ctx {
+            MyTelemetryContext::Single(process_id) => {
+                let event = TelemetryEvent {
+                    process_id: *process_id,
+                    started: started.unix_microseconds,
+                    finished: DateTimeAsMicroseconds::now().unix_microseconds,
+                    data: data.to_string(),
+                    success: Some(success.to_string()),
+                    fail: None,
+                    ip: if let Some(ip) = ip {
+                        Some(ip.to_string())
+                    } else {
+                        None
+                    },
+                };
+                let mut write_access = self.telemetry_collector.lock().await;
+                write_access.write(event)
+            }
+            MyTelemetryContext::Multiple(ids) => {
+                let mut events = Vec::with_capacity(ids.len());
+                for process_id in ids {
+                    let event = TelemetryEvent {
+                        process_id: *process_id,
+                        started: started.unix_microseconds,
+                        finished: DateTimeAsMicroseconds::now().unix_microseconds,
+                        data: data.to_string(),
+                        success: Some(success.to_string()),
+                        fail: None,
+                        ip: if let Some(ip) = ip {
+                            Some(ip.to_string())
+                        } else {
+                            None
+                        },
+                    };
+
+                    events.push(event);
+                }
+
+                let mut write_access = self.telemetry_collector.lock().await;
+                write_access.write_events(events)
+            }
+        }
+    }
+
+    pub async fn write_fail(
+        &self,
+        ctx: &MyTelemetryContext,
+        started: DateTimeAsMicroseconds,
+        data: &str,
+        fail: &str,
+        ip: Option<&str>,
+    ) {
+        if !self.is_telemetry_set_up() {
+            return;
+        }
+        let mut write_access = self.telemetry_collector.lock().await;
+        match ctx {
+            MyTelemetryContext::Single(process_id) => {
+                let event = TelemetryEvent {
+                    process_id: *process_id,
+                    started: started.unix_microseconds,
+                    finished: DateTimeAsMicroseconds::now().unix_microseconds,
+                    data: data.to_string(),
+                    success: None,
+                    fail: Some(fail.to_string()),
+                    ip: if let Some(ip) = ip {
+                        Some(ip.to_string())
+                    } else {
+                        None
+                    },
+                };
+
+                write_access.write(event)
+            }
+            MyTelemetryContext::Multiple(ids) => {
+                for process_id in ids {
+                    let event = TelemetryEvent {
+                        process_id: *process_id,
+                        started: started.unix_microseconds,
+                        finished: DateTimeAsMicroseconds::now().unix_microseconds,
+                        data: data.to_string(),
+                        success: None,
+                        fail: Some(fail.to_string()),
+                        ip: if let Some(ip) = ip {
+                            Some(ip.to_string())
+                        } else {
+                            None
+                        },
+                    };
+
+                    write_access.write(event)
+                }
+            }
+        }
+    }
+
     pub async fn write_telemetry_event(&self, event: TelemetryEvent) {
         let mut write_access = self.telemetry_collector.lock().await;
         write_access.write(event)
