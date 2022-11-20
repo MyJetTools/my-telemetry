@@ -8,6 +8,7 @@ pub use my_telemetry_event::TelemetryEvent;
 use rust_extensions::date_time::DateTimeAsMicroseconds;
 pub use telemetry_collector::TelemtryCollector;
 use tokio::sync::Mutex;
+
 #[derive(Debug, Clone)]
 pub enum MyTelemetryContext {
     Single(i64),
@@ -259,6 +260,35 @@ impl TelemetryInterface {
         for event in events {
             write_access.write(event);
         }
+    }
+}
+
+pub struct MyTelemetryCompiler {
+    items: Vec<i64>,
+}
+
+impl MyTelemetryCompiler {
+    pub fn new() -> Self {
+        Self { items: Vec::new() }
+    }
+
+    pub fn add(&mut self, item: &MyTelemetryContext) {
+        match item {
+            MyTelemetryContext::Single(value) => self.items.push(*value),
+            MyTelemetryContext::Multiple(values) => self.items.extend_from_slice(values.as_slice()),
+        }
+    }
+
+    pub fn compile(self) -> MyTelemetryContext {
+        if self.items.len() == 0 {
+            panic!("Can not comile telemetry context with no items");
+        }
+
+        if self.items.len() == 1 {
+            return MyTelemetryContext::Single(self.items[0]);
+        }
+
+        return MyTelemetryContext::Multiple(self.items);
     }
 }
 
