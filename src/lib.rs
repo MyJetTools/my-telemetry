@@ -156,7 +156,7 @@ impl TelemetryInterface {
                 }
 
                 let event = TelemetryEvent {
-                    process_id: *ids.get(ids.len()).unwrap(),
+                    process_id: *ids.get(ids.len() - 1).unwrap(),
                     started: started.unix_microseconds,
                     finished: DateTimeAsMicroseconds::now().unix_microseconds,
                     data: data,
@@ -177,50 +177,58 @@ impl TelemetryInterface {
         &self,
         ctx: &MyTelemetryContext,
         started: DateTimeAsMicroseconds,
-        data: &str,
-        fail: &str,
-        ip: Option<&str>,
+        data: String,
+        fail: String,
+        ip: Option<String>,
     ) {
         if !self.is_telemetry_set_up() {
             return;
         }
-        let mut write_access = self.telemetry_collector.lock().await;
+
         match ctx {
             MyTelemetryContext::Single(process_id) => {
                 let event = TelemetryEvent {
                     process_id: *process_id,
                     started: started.unix_microseconds,
                     finished: DateTimeAsMicroseconds::now().unix_microseconds,
-                    data: data.to_string(),
+                    data,
                     success: None,
-                    fail: Some(fail.to_string()),
-                    ip: if let Some(ip) = ip {
-                        Some(ip.to_string())
-                    } else {
-                        None
-                    },
+                    fail: Some(fail),
+                    ip,
                 };
-
+                let mut write_access = self.telemetry_collector.lock().await;
                 write_access.write(event)
             }
             MyTelemetryContext::Multiple(ids) => {
-                for process_id in ids {
+                let mut events = Vec::with_capacity(ids.len());
+                for i in 0..ids.len() - 1 {
                     let event = TelemetryEvent {
-                        process_id: *process_id,
+                        process_id: *ids.get(i).unwrap(),
                         started: started.unix_microseconds,
                         finished: DateTimeAsMicroseconds::now().unix_microseconds,
-                        data: data.to_string(),
+                        data: data.clone(),
                         success: None,
-                        fail: Some(fail.to_string()),
-                        ip: if let Some(ip) = ip {
-                            Some(ip.to_string())
-                        } else {
-                            None
-                        },
+                        fail: Some(fail.clone()),
+                        ip: ip.clone(),
                     };
 
-                    write_access.write(event)
+                    events.push(event);
                 }
+
+                let event = TelemetryEvent {
+                    process_id: *ids.get(ids.len() - 1).unwrap(),
+                    started: started.unix_microseconds,
+                    finished: DateTimeAsMicroseconds::now().unix_microseconds,
+                    data,
+                    success: None,
+                    fail: Some(fail),
+                    ip: ip,
+                };
+
+                events.push(event);
+
+                let mut write_access = self.telemetry_collector.lock().await;
+                write_access.write_events(events)
             }
         }
     }
