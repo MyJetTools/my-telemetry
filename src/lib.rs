@@ -73,6 +73,46 @@ impl MyTelemetryContext {
             fail_result: None,
         }
     }
+
+    pub fn parse_from_string(str: &str) -> Result<Self, String> {
+        let index = str.find(',');
+        if index.is_none() {
+            match str.parse::<i64>() {
+                Ok(result) => {
+                    return Ok(Self::Single(result));
+                }
+                Err(err) => return Err(format!("{}", err)),
+            }
+        }
+
+        let mut ids = Vec::new();
+        for id in str.split(',') {
+            match id.parse::<i64>() {
+                Ok(result) => {
+                    ids.push(result);
+                }
+                Err(err) => return Err(format!("{}", err)),
+            }
+        }
+        Ok(Self::Multiple(ids))
+    }
+
+    pub fn as_string(&self) -> String {
+        match self {
+            MyTelemetryContext::Single(value) => value.to_string(),
+            MyTelemetryContext::Multiple(values) => {
+                let mut result = String::new();
+                for (no, value) in values.into_iter().enumerate() {
+                    if no > 0 {
+                        result.push(',');
+                    }
+                    result.push_str(&value.to_string());
+                }
+
+                result
+            }
+        }
+    }
 }
 
 impl<'s> IntoIterator for &'s MyTelemetryContext {
