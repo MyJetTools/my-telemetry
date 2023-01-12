@@ -8,4 +8,4 @@ edition = "2021"
 [dependencies]
 tokio = { version = "*", features = ["full"] }
 lazy_static = "*"
-rust-extensions = { tag = "0.1.2", git = "https://github.com/MyJetTools/rust-extensions.git" }
+rust-extensions = { tag = "0.1.3", git = "https://github.com/MyJetTools/rust-extensions.git" }
