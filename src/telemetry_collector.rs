@@ -1,10 +1,10 @@
 use crate::TelemetryEvent;
 
-pub struct TelemtryCollector {
+pub struct TelemetryCollector {
     events_to_publish: Option<Vec<TelemetryEvent>>,
 }
 
-impl TelemtryCollector {
+impl TelemetryCollector {
     pub fn new() -> Self {
         Self {
             events_to_publish: None,

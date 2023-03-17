@@ -7,13 +7,13 @@ mod ctx;
 mod telemetry_collector;
 pub use ctx::*;
 pub use my_telemetry_event::TelemetryEvent;
-pub use telemetry_collector::TelemtryCollector;
+pub use telemetry_collector::TelemetryCollector;
 use tokio::sync::Mutex;
 
 lazy_static::lazy_static! {
     pub static ref TELEMETRY_INTERFACE: TelemetryInterface = {
         TelemetryInterface{
-            telemetry_collector: Mutex::new(TelemtryCollector::new()),
+            telemetry_collector: Mutex::new(TelemetryCollector::new()),
             writer_is_set: AtomicBool::new(false),
         }
     };

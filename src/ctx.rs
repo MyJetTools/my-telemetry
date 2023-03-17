@@ -3,7 +3,7 @@ use std::sync::atomic::AtomicBool;
 use rust_extensions::date_time::DateTimeAsMicroseconds;
 use tokio::sync::Mutex;
 
-use crate::{EventDurationTracker, TelemetryEvent, TelemtryCollector};
+use crate::{EventDurationTracker, TelemetryCollector, TelemetryEvent};
 
 #[derive(Debug, Clone)]
 pub enum MyTelemetryContext {
@@ -148,14 +148,14 @@ impl<'s> Iterator for TelemetryContextIterator<'s> {
 }
 
 pub struct TelemetryInterface {
-    pub telemetry_collector: Mutex<TelemtryCollector>,
+    pub telemetry_collector: Mutex<TelemetryCollector>,
     pub writer_is_set: AtomicBool,
 }
 
 impl TelemetryInterface {
     pub fn new() -> Self {
         Self {
-            telemetry_collector: Mutex::new(TelemtryCollector::new()),
+            telemetry_collector: Mutex::new(TelemetryCollector::new()),
             writer_is_set: AtomicBool::new(false),
         }
     }
@@ -317,7 +317,7 @@ impl MyTelemetryCompiler {
 
     pub fn compile(self) -> MyTelemetryContext {
         if self.items.len() == 0 {
-            panic!("Can not comile telemetry context with no items");
+            panic!("Can not compile telemetry context with no items");
         }
 
         if self.items.len() == 1 {
