@@ -1,10 +1,10 @@
-use rust_extensions::date_time::DateTimeAsMicroseconds;
+use rust_extensions::{date_time::DateTimeAsMicroseconds, StrOrString};
 
 use crate::{MyTelemetryContext, TelemetryEvent};
 
 pub struct EventDurationTracker {
     pub process_id: MyTelemetryContext,
-    pub event_name: Option<String>,
+    pub event_name: Option<StrOrString<'static>>,
     pub started: DateTimeAsMicroseconds,
     pub ok_result: Option<String>,
     pub fail_result: Option<String>,
@@ -39,7 +39,7 @@ impl Drop for EventDurationTracker {
                             process_id: *process_id,
                             started: self.started.unix_microseconds,
                             finished: DateTimeAsMicroseconds::now().unix_microseconds,
-                            data: event_name.to_string(),
+                            data: event_name.as_str().to_string(),
                             success,
                             fail,
                             ip: None,
@@ -56,7 +56,7 @@ impl Drop for EventDurationTracker {
                                 process_id: *process_id,
                                 started: self.started.unix_microseconds,
                                 finished: DateTimeAsMicroseconds::now().unix_microseconds,
-                                data: event_name.to_string(),
+                                data: event_name.as_str().to_string(),
                                 success: success.clone(),
                                 fail: fail.clone(),
                                 ip: None,

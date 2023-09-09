@@ -1,6 +1,6 @@
 use std::sync::atomic::AtomicBool;
 
-use rust_extensions::date_time::DateTimeAsMicroseconds;
+use rust_extensions::{date_time::DateTimeAsMicroseconds, StrOrString};
 use tokio::sync::Mutex;
 
 use crate::{EventDurationTracker, TelemetryCollector, TelemetryEvent};
@@ -60,10 +60,13 @@ impl MyTelemetryContext {
         }
     }
 
-    pub fn start_event_tracking(&self, event_name: String) -> EventDurationTracker {
+    pub fn start_event_tracking(
+        &self,
+        event_name: impl Into<StrOrString<'static>>,
+    ) -> EventDurationTracker {
         EventDurationTracker {
             process_id: self.clone(),
-            event_name: Some(event_name),
+            event_name: Some(event_name.into()),
             started: DateTimeAsMicroseconds::now(),
             ok_result: None,
             fail_result: None,
