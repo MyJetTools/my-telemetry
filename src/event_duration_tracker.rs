@@ -22,12 +22,16 @@ impl EventDurationTracker {
 
 impl Drop for EventDurationTracker {
     fn drop(&mut self) {
+        if !crate::TELEMETRY_INTERFACE.is_telemetry_set_up() {
+            return;
+        }
+
         let mut success = self.ok_result.take();
         let fail = self.fail_result.take();
 
         if fail.is_some() {
             success = None;
-        } else if success.is_none() && fail.is_none() {
+        } else if success.is_none() {
             success = Some("Duration tracking".to_string());
         }
 
@@ -43,9 +47,11 @@ impl Drop for EventDurationTracker {
                         fail,
                         ip: None,
                     };
-                    tokio::spawn(
-                        async move { crate::TELEMETRY_INTERFACE.write_telemetry_event(event) },
-                    );
+                    tokio::spawn(async move {
+                        crate::TELEMETRY_INTERFACE
+                            .write_telemetry_event(event)
+                            .await
+                    });
                 }
                 MyTelemetryContext::Multiple(ids) => {
                     let mut events = Vec::with_capacity(ids.len());
@@ -64,7 +70,9 @@ impl Drop for EventDurationTracker {
                         events.push(event);
                     }
                     tokio::spawn(async move {
-                        crate::TELEMETRY_INTERFACE.write_telemetry_events(events)
+                        crate::TELEMETRY_INTERFACE
+                            .write_telemetry_events(events)
+                            .await
                     });
                 }
             }
