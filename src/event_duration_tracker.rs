@@ -22,52 +22,50 @@ impl EventDurationTracker {
 
 impl Drop for EventDurationTracker {
     fn drop(&mut self) {
-        if crate::TELEMETRY_INTERFACE.is_telemetry_set_up() {
-            let mut success = self.ok_result.take();
-            let fail = self.fail_result.take();
+        let mut success = self.ok_result.take();
+        let fail = self.fail_result.take();
 
-            if fail.is_some() {
-                success = None;
-            } else if success.is_none() && fail.is_none() {
-                success = Some("Duration tracking".to_string());
-            }
+        if fail.is_some() {
+            success = None;
+        } else if success.is_none() && fail.is_none() {
+            success = Some("Duration tracking".to_string());
+        }
 
-            if let Some(event_name) = self.event_name.take() {
-                match &self.process_id {
-                    MyTelemetryContext::Single(process_id) => {
+        if let Some(event_name) = self.event_name.take() {
+            match &self.process_id {
+                MyTelemetryContext::Single(process_id) => {
+                    let event = TelemetryEvent {
+                        process_id: *process_id,
+                        started: self.started.unix_microseconds,
+                        finished: DateTimeAsMicroseconds::now().unix_microseconds,
+                        data: event_name.as_str().to_string(),
+                        success,
+                        fail,
+                        ip: None,
+                    };
+                    tokio::spawn(
+                        async move { crate::TELEMETRY_INTERFACE.write_telemetry_event(event) },
+                    );
+                }
+                MyTelemetryContext::Multiple(ids) => {
+                    let mut events = Vec::with_capacity(ids.len());
+
+                    for process_id in ids {
                         let event = TelemetryEvent {
                             process_id: *process_id,
                             started: self.started.unix_microseconds,
                             finished: DateTimeAsMicroseconds::now().unix_microseconds,
                             data: event_name.as_str().to_string(),
-                            success,
-                            fail,
+                            success: success.clone(),
+                            fail: fail.clone(),
                             ip: None,
                         };
-                        tokio::spawn(async move {
-                            crate::TELEMETRY_INTERFACE.write_telemetry_event(event)
-                        });
-                    }
-                    MyTelemetryContext::Multiple(ids) => {
-                        let mut events = Vec::with_capacity(ids.len());
 
-                        for process_id in ids {
-                            let event = TelemetryEvent {
-                                process_id: *process_id,
-                                started: self.started.unix_microseconds,
-                                finished: DateTimeAsMicroseconds::now().unix_microseconds,
-                                data: event_name.as_str().to_string(),
-                                success: success.clone(),
-                                fail: fail.clone(),
-                                ip: None,
-                            };
-
-                            events.push(event);
-                        }
-                        tokio::spawn(async move {
-                            crate::TELEMETRY_INTERFACE.write_telemetry_events(events)
-                        });
+                        events.push(event);
                     }
+                    tokio::spawn(async move {
+                        crate::TELEMETRY_INTERFACE.write_telemetry_events(events)
+                    });
                 }
             }
         }
