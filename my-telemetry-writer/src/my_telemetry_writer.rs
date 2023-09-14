@@ -35,11 +35,11 @@ impl MyTelemetryWriter {
         app_states: Arc<dyn ApplicationStates + Send + Sync + 'static>,
         logger: Arc<dyn Logger + Send + Sync + 'static>,
     ) {
-        if my_telemetry::TELEMETRY_INTERFACE.is_telemetry_set_up() {
+        if my_telemetry_core::TELEMETRY_INTERFACE.is_telemetry_set_up() {
             return;
         }
 
-        my_telemetry::TELEMETRY_INTERFACE
+        my_telemetry_core::TELEMETRY_INTERFACE
             .writer_is_set
             .store(true, std::sync::atomic::Ordering::SeqCst);
         self.timer.start(app_states, logger);
@@ -86,7 +86,7 @@ impl MyTimerTick for TelemetryTimer {
                 self.detect_write_mode().await;
             }
 
-            let mut write_access = my_telemetry::TELEMETRY_INTERFACE
+            let mut write_access = my_telemetry_core::TELEMETRY_INTERFACE
                 .telemetry_collector
                 .lock()
                 .await;

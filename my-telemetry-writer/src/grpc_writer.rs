@@ -1,6 +1,6 @@
 use std::{sync::Arc, time::Duration};
 
-use my_telemetry::TelemetryEvent;
+use my_telemetry_core::TelemetryEvent;
 use tokio::sync::Mutex;
 use tonic::{transport::Channel, Request};
 

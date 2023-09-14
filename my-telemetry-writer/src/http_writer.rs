@@ -1,4 +1,4 @@
-use my_telemetry::TelemetryEvent;
+use my_telemetry_core::TelemetryEvent;
 use serde::*;
 
 pub async fn write_as_http(url: &str, app_name: &str, to_write: Vec<TelemetryEvent>) -> bool {
