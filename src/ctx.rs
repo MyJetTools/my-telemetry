@@ -67,6 +67,7 @@ impl MyTelemetryContext {
             started: DateTimeAsMicroseconds::now(),
             ok_result: None,
             fail_result: None,
+            tags: None,
         }
     }
 

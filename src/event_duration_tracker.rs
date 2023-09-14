@@ -1,6 +1,6 @@
 use rust_extensions::{date_time::DateTimeAsMicroseconds, StrOrString};
 
-use crate::{MyTelemetryContext, TelemetryEvent};
+use crate::{my_telemetry_event::TelemetryEventTag, MyTelemetryContext, TelemetryEvent};
 
 pub struct EventDurationTracker {
     pub process_id: MyTelemetryContext,
@@ -8,6 +8,7 @@ pub struct EventDurationTracker {
     pub started: DateTimeAsMicroseconds,
     pub ok_result: Option<String>,
     pub fail_result: Option<String>,
+    pub tags: Option<Vec<TelemetryEventTag>>,
 }
 
 impl EventDurationTracker {
@@ -17,6 +18,17 @@ impl EventDurationTracker {
 
     pub fn set_ok_result(&mut self, result: String) {
         self.ok_result = Some(result);
+    }
+
+    pub fn add_tag(&mut self, key: String, value: String) {
+        if self.tags.is_none() {
+            self.tags = Some(Vec::new());
+        }
+
+        self.tags
+            .as_mut()
+            .unwrap()
+            .push(TelemetryEventTag { key, value });
     }
 }
 
@@ -45,7 +57,6 @@ impl Drop for EventDurationTracker {
                         data: event_name.as_str().to_string(),
                         success,
                         fail,
-                        ip: None,
                         tags: None,
                     };
                     tokio::spawn(async move {
@@ -65,7 +76,6 @@ impl Drop for EventDurationTracker {
                             data: event_name.as_str().to_string(),
                             success: success.clone(),
                             fail: fail.clone(),
-                            ip: None,
                             tags: None,
                         };
 
