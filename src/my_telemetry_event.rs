@@ -10,20 +10,21 @@ pub struct TelemetryEvent {
     pub tags: Option<Vec<TelemetryEventTag>>,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct TelemetryEventTag {
     pub key: String,
     pub value: String,
 }
 
+#[derive(Debug)]
 pub struct TelemetryEventTagsBuilder {
-    pub events: Option<Vec<TelemetryEventTag>>,
+    pub tags: Option<Vec<TelemetryEventTag>>,
 }
 
 impl TelemetryEventTagsBuilder {
     pub fn new() -> Self {
         Self {
-            events: Some(Vec::new()),
+            tags: Some(Vec::new()),
         }
     }
 
@@ -32,10 +33,10 @@ impl TelemetryEventTagsBuilder {
         key: impl Into<StrOrString<'static>>,
         value: impl Into<StrOrString<'static>>,
     ) -> Self {
-        if self.events.is_none() {
-            self.events = Some(Vec::new());
+        if self.tags.is_none() {
+            self.tags = Some(Vec::new());
         }
-        self.events.as_mut().unwrap().push(TelemetryEventTag {
+        self.tags.as_mut().unwrap().push(TelemetryEventTag {
             key: key.into().into(),
             value: value.into().into(),
         });
@@ -48,18 +49,18 @@ impl TelemetryEventTagsBuilder {
     }
 
     pub fn build(self) -> Option<Vec<TelemetryEventTag>> {
-        self.events
+        self.tags
     }
 
     pub fn take_tags(&mut self) -> Self {
         Self {
-            events: self.events.take(),
+            tags: self.tags.take(),
         }
     }
 
     pub fn clone(&mut self) -> Self {
         Self {
-            events: self.events.clone(),
+            tags: self.tags.clone(),
         }
     }
 }
