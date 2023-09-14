@@ -50,6 +50,18 @@ impl TelemetryEventTagsBuilder {
     pub fn build(self) -> Option<Vec<TelemetryEventTag>> {
         self.events
     }
+
+    pub fn take_tags(&mut self) -> Self {
+        Self {
+            events: self.events.take(),
+        }
+    }
+
+    pub fn clone(&mut self) -> Self {
+        Self {
+            events: self.events.clone(),
+        }
+    }
 }
 
 impl Into<Option<Vec<TelemetryEventTag>>> for TelemetryEventTagsBuilder {
