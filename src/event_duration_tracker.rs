@@ -46,6 +46,7 @@ impl Drop for EventDurationTracker {
                         success,
                         fail,
                         ip: None,
+                        tags: None,
                     };
                     tokio::spawn(async move {
                         crate::TELEMETRY_INTERFACE
@@ -65,6 +66,7 @@ impl Drop for EventDurationTracker {
                             success: success.clone(),
                             fail: fail.clone(),
                             ip: None,
+                            tags: None,
                         };
 
                         events.push(event);

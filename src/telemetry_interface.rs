@@ -45,6 +45,7 @@ impl TelemetryInterface {
                     success: Some(success),
                     fail: None,
                     ip,
+                    tags: None,
                 };
                 let mut write_access = self.telemetry_collector.lock().await;
                 write_access.write(event)
@@ -60,6 +61,7 @@ impl TelemetryInterface {
                         success: Some(success.to_string()),
                         fail: None,
                         ip: ip.clone(),
+                        tags: None,
                     };
 
                     events.push(event);
@@ -73,6 +75,7 @@ impl TelemetryInterface {
                     success: Some(success),
                     fail: None,
                     ip: ip,
+                    tags: None,
                 };
 
                 events.push(event);
@@ -105,6 +108,7 @@ impl TelemetryInterface {
                     success: None,
                     fail: Some(fail),
                     ip,
+                    tags: None,
                 };
                 let mut write_access = self.telemetry_collector.lock().await;
                 write_access.write(event)
@@ -120,6 +124,7 @@ impl TelemetryInterface {
                         success: None,
                         fail: Some(fail.clone()),
                         ip: ip.clone(),
+                        tags: None,
                     };
 
                     events.push(event);
@@ -133,6 +138,7 @@ impl TelemetryInterface {
                     success: None,
                     fail: Some(fail),
                     ip: ip,
+                    tags: None,
                 };
 
                 events.push(event);

@@ -6,4 +6,10 @@ pub struct TelemetryEvent {
     pub success: Option<String>,
     pub fail: Option<String>,
     pub ip: Option<String>,
+    pub tags: Option<Vec<TelemetryEventTag>>,
+}
+
+pub struct TelemetryEventTag {
+    pub key: String,
+    pub value: String,
 }
