@@ -28,17 +28,19 @@ impl TelemetryEventTagsBuilder {
     }
 
     pub fn add(
-        &mut self,
+        mut self,
         key: impl Into<StrOrString<'static>>,
         value: impl Into<StrOrString<'static>>,
-    ) {
+    ) -> Self {
         if self.events.is_none() {
             self.events = Some(Vec::new());
         }
         self.events.as_mut().unwrap().push(TelemetryEventTag {
             key: key.into().into(),
             value: value.into().into(),
-        })
+        });
+
+        self
     }
 
     pub fn build(self) -> Option<Vec<TelemetryEventTag>> {
