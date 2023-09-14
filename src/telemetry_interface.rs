@@ -3,7 +3,9 @@ use std::sync::atomic::AtomicBool;
 use rust_extensions::date_time::DateTimeAsMicroseconds;
 use tokio::sync::Mutex;
 
-use crate::{MyTelemetryContext, TelemetryCollector, TelemetryEvent};
+use crate::{
+    my_telemetry_event::TelemetryEventTag, MyTelemetryContext, TelemetryCollector, TelemetryEvent,
+};
 
 pub struct TelemetryInterface {
     pub telemetry_collector: Mutex<TelemetryCollector>,
@@ -37,6 +39,7 @@ impl TelemetryInterface {
 
         match ctx {
             MyTelemetryContext::Single(process_id) => {
+                let tags = convert_ip_to_tags(ip.as_ref());
                 let event = TelemetryEvent {
                     process_id: *process_id,
                     started: started.unix_microseconds,
@@ -45,7 +48,7 @@ impl TelemetryInterface {
                     success: Some(success),
                     fail: None,
                     ip,
-                    tags: None,
+                    tags,
                 };
                 let mut write_access = self.telemetry_collector.lock().await;
                 write_access.write(event)
@@ -53,6 +56,8 @@ impl TelemetryInterface {
             MyTelemetryContext::Multiple(ids) => {
                 let mut events = Vec::with_capacity(ids.len());
                 for i in 0..ids.len() - 1 {
+                    let tags = convert_ip_to_tags(ip.as_ref());
+
                     let event = TelemetryEvent {
                         process_id: *ids.get(i).unwrap(),
                         started: started.unix_microseconds,
@@ -61,12 +66,13 @@ impl TelemetryInterface {
                         success: Some(success.to_string()),
                         fail: None,
                         ip: ip.clone(),
-                        tags: None,
+                        tags,
                     };
 
                     events.push(event);
                 }
 
+                let tags = convert_ip_to_tags(ip.as_ref());
                 let event = TelemetryEvent {
                     process_id: *ids.get(ids.len() - 1).unwrap(),
                     started: started.unix_microseconds,
@@ -75,7 +81,7 @@ impl TelemetryInterface {
                     success: Some(success),
                     fail: None,
                     ip: ip,
-                    tags: None,
+                    tags,
                 };
 
                 events.push(event);
@@ -100,6 +106,7 @@ impl TelemetryInterface {
 
         match ctx {
             MyTelemetryContext::Single(process_id) => {
+                let tags = convert_ip_to_tags(ip.as_ref());
                 let event = TelemetryEvent {
                     process_id: *process_id,
                     started: started.unix_microseconds,
@@ -108,7 +115,7 @@ impl TelemetryInterface {
                     success: None,
                     fail: Some(fail),
                     ip,
-                    tags: None,
+                    tags,
                 };
                 let mut write_access = self.telemetry_collector.lock().await;
                 write_access.write(event)
@@ -116,6 +123,7 @@ impl TelemetryInterface {
             MyTelemetryContext::Multiple(ids) => {
                 let mut events = Vec::with_capacity(ids.len());
                 for i in 0..ids.len() - 1 {
+                    let tags = convert_ip_to_tags(ip.as_ref());
                     let event = TelemetryEvent {
                         process_id: *ids.get(i).unwrap(),
                         started: started.unix_microseconds,
@@ -124,12 +132,13 @@ impl TelemetryInterface {
                         success: None,
                         fail: Some(fail.clone()),
                         ip: ip.clone(),
-                        tags: None,
+                        tags,
                     };
 
                     events.push(event);
                 }
 
+                let tags = convert_ip_to_tags(ip.as_ref());
                 let event = TelemetryEvent {
                     process_id: *ids.get(ids.len() - 1).unwrap(),
                     started: started.unix_microseconds,
@@ -138,7 +147,7 @@ impl TelemetryInterface {
                     success: None,
                     fail: Some(fail),
                     ip: ip,
-                    tags: None,
+                    tags,
                 };
 
                 events.push(event);
@@ -189,5 +198,17 @@ impl MyTelemetryCompiler {
         }
 
         return MyTelemetryContext::Multiple(self.items);
+    }
+}
+
+fn convert_ip_to_tags(ip: Option<&String>) -> Option<Vec<TelemetryEventTag>> {
+    if let Some(ip) = ip.as_ref() {
+        vec![TelemetryEventTag {
+            key: "ip".to_string(),
+            value: ip.to_string(),
+        }]
+        .into()
+    } else {
+        None
     }
 }
