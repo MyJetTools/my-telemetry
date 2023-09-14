@@ -10,6 +10,9 @@ pub use telemetry_collector::TelemetryCollector;
 mod telemetry_interface;
 pub use telemetry_interface::*;
 
+#[cfg(feature = "my-telemetry-writer")]
+pub extern crate my_telemetry_writer as telemetry_server_writer;
+
 lazy_static::lazy_static! {
     pub static ref TELEMETRY_INTERFACE: TelemetryInterface =
         TelemetryInterface::new();
