@@ -43,6 +43,10 @@ impl TelemetryEventTagsBuilder {
         self
     }
 
+    pub fn add_ip(self, ip: impl Into<StrOrString<'static>>) -> Self {
+        self.add("ip", ip)
+    }
+
     pub fn build(self) -> Option<Vec<TelemetryEventTag>> {
         self.events
     }
