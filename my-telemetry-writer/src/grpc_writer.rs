@@ -94,13 +94,15 @@ impl GrpcClient {
         let result = tokio::time::timeout(GRPC_TIMEOUT, future).await;
 
         if result.is_err() {
+            println!("Error sending telemetry: Timeout");
             *write_access = None;
             return false;
         }
 
         let result = result.unwrap();
 
-        if result.is_err() {
+        if let Err(err) = result {
+            println!("Error sending telemetry: {:?}", err);
             *write_access = None;
             return false;
         }
