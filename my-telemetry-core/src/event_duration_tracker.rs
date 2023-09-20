@@ -24,6 +24,10 @@ impl EventDurationTracker {
         self.ignore_this_event = true;
     }
 
+    pub fn do_not_ignore_this_event(&mut self) {
+        self.ignore_this_event = false;
+    }
+
     pub fn add_tag(&mut self, key: String, value: String) {
         if self.tags.is_none() {
             self.tags = Some(Vec::new());
