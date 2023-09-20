@@ -68,6 +68,7 @@ impl MyTelemetryContext {
             ok_result: None,
             fail_result: None,
             tags: None,
+            ignore_this_event: false,
         }
     }
 

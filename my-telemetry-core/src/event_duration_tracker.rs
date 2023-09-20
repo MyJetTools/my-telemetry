@@ -9,6 +9,7 @@ pub struct EventDurationTracker {
     pub ok_result: Option<String>,
     pub fail_result: Option<String>,
     pub tags: Option<Vec<TelemetryEventTag>>,
+    pub ignore_this_event: bool,
 }
 
 impl EventDurationTracker {
@@ -18,6 +19,9 @@ impl EventDurationTracker {
 
     pub fn set_ok_result(&mut self, result: String) {
         self.ok_result = Some(result);
+    }
+    pub fn ignore_this_event(&mut self) {
+        self.ignore_this_event = true;
     }
 
     pub fn add_tag(&mut self, key: String, value: String) {
@@ -34,6 +38,10 @@ impl EventDurationTracker {
 
 impl Drop for EventDurationTracker {
     fn drop(&mut self) {
+        if self.ignore_this_event {
+            return;
+        }
+
         if !crate::TELEMETRY_INTERFACE.is_telemetry_set_up() {
             return;
         }
