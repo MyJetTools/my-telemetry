@@ -1,6 +1,2 @@
 [workspace]
-members = [
-    "my-telemetry",
-    "my-telemetry-writer",
-    "my-telemetry-core",
-]
+members = ["my-telemetry", "my-telemetry-writer", "my-telemetry-core"]
