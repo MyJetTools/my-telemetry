@@ -19,7 +19,6 @@ serde_json = "*"
 
 tokio = { version = "*", features = ["full"] }
 tonic = { version = "*", features = ["tls", "tls-roots", "prost"] }
-anyhow = "*"
 prost = "*"
 prost-types = "*"
 futures-core = "*"
