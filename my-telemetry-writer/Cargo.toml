@@ -27,3 +27,4 @@ futures-util = "*"
 
 [build-dependencies]
 ci-utils = { git = "https://github.com/MyJetTools/ci-utils.git", tag = "0.1.0" }
+prost-build = "*"
