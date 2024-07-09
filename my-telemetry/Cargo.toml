@@ -6,7 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [features]
 default = []
-my_telemetry_writer = ["my-telemetry-writer"]
+my_telemetry_writer = []
 
 [dependencies]
 my-telemetry-core = { path = "../my-telemetry-core" }
