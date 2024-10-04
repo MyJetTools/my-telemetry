@@ -35,32 +35,39 @@ impl GrpcClient {
 
         let url = self.settings.get_telemetry_url().await;
 
-        let telemetry_client = create_channel(url).await;
+        if let Some(url) = url {
+            let telemetry_client = create_channel(url).await;
 
-        if telemetry_client.is_none() {
-            return false;
+            if telemetry_client.is_none() {
+                return false;
+            }
+
+            let mut telemetry_client = telemetry_client.unwrap();
+
+            let result = ping(&mut telemetry_client).await;
+            if result {
+                *write_access = Some(telemetry_client);
+            }
+
+            return result;
         }
 
-        let mut telemetry_client = telemetry_client.unwrap();
-
-        let result = ping(&mut telemetry_client).await;
-        if result {
-            *write_access = Some(telemetry_client);
-        }
-
-        result
+        false
     }
 
     pub async fn write_events(&self, service_name: &str, to_write: Vec<TelemetryEvent>) -> bool {
         let mut write_access = self.channel.lock().await;
 
         if write_access.is_none() {
-            let channel = create_channel(self.settings.get_telemetry_url().await).await;
-            if channel.is_none() {
-                return false;
-            }
+            let url = self.settings.get_telemetry_url().await;
+            if let Some(url) = url {
+                let channel = create_channel(url).await;
+                if channel.is_none() {
+                    return false;
+                }
 
-            *write_access = channel;
+                *write_access = channel;
+            }
         }
 
         let grpc_channel = write_access.as_mut().unwrap();

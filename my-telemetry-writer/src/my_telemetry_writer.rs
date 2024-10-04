@@ -116,14 +116,17 @@ impl MyTimerTick for TelemetryTimer {
             }
             WriteMode::Http => {
                 let url = self.settings.get_telemetry_url().await;
-                if !crate::http_writer::write_as_http(
-                    url.as_str(),
-                    self.app_name.as_str(),
-                    to_write,
-                )
-                .await
-                {
-                    self.write_mode.set_write_mode(WriteMode::Unknown);
+
+                if let Some(url) = url {
+                    if !crate::http_writer::write_as_http(
+                        url.as_str(),
+                        self.app_name.as_str(),
+                        to_write,
+                    )
+                    .await
+                    {
+                        self.write_mode.set_write_mode(WriteMode::Unknown);
+                    }
                 }
             }
         }
