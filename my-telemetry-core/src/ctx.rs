@@ -4,11 +4,15 @@ use crate::EventDurationTracker;
 
 #[derive(Debug, Clone)]
 pub enum MyTelemetryContext {
+    Empty,
     Single(i64),
     Multiple(Vec<i64>),
 }
 
 impl MyTelemetryContext {
+    pub fn create_empty() -> Self {
+        Self::Empty
+    }
     pub fn new() -> Self {
         Self::Single(DateTimeAsMicroseconds::now().unix_microseconds)
     }
@@ -43,6 +47,7 @@ impl MyTelemetryContext {
                     MyTelemetryContext::Multiple(other_ids) => {
                         new_ids.extend_from_slice(other_ids);
                     }
+                    MyTelemetryContext::Empty => {}
                 }
                 *self = MyTelemetryContext::Multiple(new_ids);
             }
@@ -53,7 +58,11 @@ impl MyTelemetryContext {
                 MyTelemetryContext::Multiple(other_ids) => {
                     ids.extend_from_slice(other_ids);
                 }
+                MyTelemetryContext::Empty => {}
             },
+            MyTelemetryContext::Empty => {
+                *self = other.clone();
+            }
         }
     }
 
@@ -109,6 +118,9 @@ impl MyTelemetryContext {
 
                 result
             }
+            MyTelemetryContext::Empty => {
+                DateTimeAsMicroseconds::now().unix_microseconds.to_string()
+            }
         }
     }
 }
@@ -145,6 +157,7 @@ impl<'s> Iterator for TelemetryContextIterator<'s> {
                 let result = ids.get(self.pos)?;
                 return Some(*result);
             }
+            MyTelemetryContext::Empty => None,
         }
     }
 }

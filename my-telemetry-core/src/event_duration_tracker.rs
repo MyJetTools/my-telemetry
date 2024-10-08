@@ -99,6 +99,8 @@ impl Drop for EventDurationTracker {
                             .await
                     });
                 }
+
+                MyTelemetryContext::Empty => {}
             }
         }
     }

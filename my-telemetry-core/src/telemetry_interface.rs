@@ -82,6 +82,8 @@ impl TelemetryInterface {
                 let mut write_access = self.telemetry_collector.lock().await;
                 write_access.write_events(events)
             }
+
+            MyTelemetryContext::Empty => {}
         }
     }
 
@@ -142,6 +144,7 @@ impl TelemetryInterface {
                 let mut write_access = self.telemetry_collector.lock().await;
                 write_access.write_events(events)
             }
+            MyTelemetryContext::Empty => {}
         }
     }
 
@@ -172,6 +175,7 @@ impl MyTelemetryCompiler {
         match item {
             MyTelemetryContext::Single(value) => self.items.push(*value),
             MyTelemetryContext::Multiple(values) => self.items.extend_from_slice(values.as_slice()),
+            MyTelemetryContext::Empty => {}
         }
     }
 
