@@ -6,14 +6,17 @@ pub struct EventDurationTracker {
     pub my_telemetry: MyTelemetryContext,
     pub event_name: Option<StrOrString<'static>>,
     pub started: DateTimeAsMicroseconds,
-    pub ok_result: Option<String>,
+    pub ok_result: Option<StrOrString<'static>>,
     pub fail_result: Option<String>,
     pub tags: Option<Vec<TelemetryEventTag>>,
     pub ignore_this_event: bool,
 }
 
 impl EventDurationTracker {
-    pub fn new(event_name: impl Into<StrOrString<'static>>, ok_result: Option<String>) -> Self {
+    pub fn new(
+        event_name: impl Into<StrOrString<'static>>,
+        ok_result: Option<StrOrString<'static>>,
+    ) -> Self {
         let event_name = event_name.into();
         let now = DateTimeAsMicroseconds::now();
         Self {
@@ -31,8 +34,8 @@ impl EventDurationTracker {
         self.ok_result = None;
     }
 
-    pub fn set_ok_result(&mut self, result: String) {
-        self.ok_result = Some(result);
+    pub fn set_ok_result(&mut self, result: impl Into<StrOrString<'static>>) {
+        self.ok_result = Some(result.into());
     }
     pub fn ignore_this_event(&mut self) {
         self.ignore_this_event = true;
@@ -70,7 +73,7 @@ impl Drop for EventDurationTracker {
             return;
         }
 
-        let mut success = self.ok_result.take();
+        let mut success = self.ok_result.take().map(|itm| itm.to_string());
         let fail = self.fail_result.take();
 
         if fail.is_some() {

@@ -13,14 +13,38 @@ impl MyTelemetryContext {
     pub fn create_empty() -> Self {
         Self::Empty
     }
+
+    #[deprecated(note = "Use MyTelemetryContext::start_duration_tracking('my-process-name')")]
     pub fn new() -> Self {
         Self::Single(DateTimeAsMicroseconds::now().unix_microseconds)
     }
 
+    #[deprecated(note = "Use MyTelemetryContext::start_duration_tracking('my-process-name')")]
     pub fn track_timer_duration(
         process_name: impl Into<StrOrString<'static>>,
     ) -> EventDurationTracker {
-        EventDurationTracker::new(process_name, Some("TimerTracker Ok".to_string()))
+        EventDurationTracker::new(process_name, None)
+    }
+
+    pub fn start_duration_tracking(
+        process_name: impl Into<StrOrString<'static>>,
+    ) -> EventDurationTracker {
+        EventDurationTracker::new(process_name, None)
+    }
+
+    pub fn start_event_tracking(
+        &self,
+        event_name: impl Into<StrOrString<'static>>,
+    ) -> EventDurationTracker {
+        EventDurationTracker {
+            my_telemetry: self.clone(),
+            event_name: Some(event_name.into()),
+            started: DateTimeAsMicroseconds::now(),
+            ok_result: None,
+            fail_result: None,
+            tags: None,
+            ignore_this_event: false,
+        }
     }
 
     pub fn compile<'s, TIter: Iterator<Item = &'s MyTelemetryContext>>(items: TIter) -> Self {
@@ -69,21 +93,6 @@ impl MyTelemetryContext {
             MyTelemetryContext::Empty => {
                 *self = other.clone();
             }
-        }
-    }
-
-    pub fn start_event_tracking(
-        &self,
-        event_name: impl Into<StrOrString<'static>>,
-    ) -> EventDurationTracker {
-        EventDurationTracker {
-            my_telemetry: self.clone(),
-            event_name: Some(event_name.into()),
-            started: DateTimeAsMicroseconds::now(),
-            ok_result: None,
-            fail_result: None,
-            tags: None,
-            ignore_this_event: false,
         }
     }
 
@@ -173,7 +182,7 @@ impl Into<MyTelemetryContext> for Option<&MyTelemetryContext> {
         if let Some(ctx) = self {
             ctx.clone()
         } else {
-            MyTelemetryContext::new()
+            MyTelemetryContext::Single(DateTimeAsMicroseconds::now().unix_microseconds).into()
         }
     }
 }
