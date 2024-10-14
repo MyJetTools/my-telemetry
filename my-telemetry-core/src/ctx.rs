@@ -77,7 +77,7 @@ impl MyTelemetryContext {
         event_name: impl Into<StrOrString<'static>>,
     ) -> EventDurationTracker {
         EventDurationTracker {
-            process_id: self.clone(),
+            my_telemetry: self.clone(),
             event_name: Some(event_name.into()),
             started: DateTimeAsMicroseconds::now(),
             ok_result: None,

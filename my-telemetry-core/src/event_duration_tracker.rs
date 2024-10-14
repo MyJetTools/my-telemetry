@@ -3,7 +3,7 @@ use rust_extensions::{date_time::DateTimeAsMicroseconds, StrOrString};
 use crate::{my_telemetry_event::TelemetryEventTag, MyTelemetryContext, TelemetryEvent};
 
 pub struct EventDurationTracker {
-    pub process_id: MyTelemetryContext,
+    pub my_telemetry: MyTelemetryContext,
     pub event_name: Option<StrOrString<'static>>,
     pub started: DateTimeAsMicroseconds,
     pub ok_result: Option<String>,
@@ -17,7 +17,7 @@ impl EventDurationTracker {
         let event_name = event_name.into();
         let now = DateTimeAsMicroseconds::now();
         Self {
-            process_id: MyTelemetryContext::Single(now.unix_microseconds),
+            my_telemetry: MyTelemetryContext::Single(now.unix_microseconds),
             event_name: Some(event_name),
             started: now,
             ok_result,
@@ -80,7 +80,7 @@ impl Drop for EventDurationTracker {
         }
 
         if let Some(event_name) = self.event_name.take() {
-            match &self.process_id {
+            match &self.my_telemetry {
                 MyTelemetryContext::Single(process_id) => {
                     let event = TelemetryEvent {
                         process_id: *process_id,
