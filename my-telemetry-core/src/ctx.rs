@@ -17,6 +17,12 @@ impl MyTelemetryContext {
         Self::Single(DateTimeAsMicroseconds::now().unix_microseconds)
     }
 
+    pub fn track_timer_duration(
+        process_name: impl Into<StrOrString<'static>>,
+    ) -> EventDurationTracker {
+        EventDurationTracker::new(process_name, Some("TimerTracker Ok".to_string()))
+    }
+
     pub fn compile<'s, TIter: Iterator<Item = &'s MyTelemetryContext>>(items: TIter) -> Self {
         let mut result: Option<MyTelemetryContext> = None;
 

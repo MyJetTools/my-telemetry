@@ -13,8 +13,22 @@ pub struct EventDurationTracker {
 }
 
 impl EventDurationTracker {
+    pub fn new(event_name: impl Into<StrOrString<'static>>, ok_result: Option<String>) -> Self {
+        let event_name = event_name.into();
+        let now = DateTimeAsMicroseconds::now();
+        Self {
+            process_id: MyTelemetryContext::Single(now.unix_microseconds),
+            event_name: Some(event_name),
+            started: now,
+            ok_result,
+            fail_result: None,
+            tags: None,
+            ignore_this_event: false,
+        }
+    }
     pub fn set_fail_result(&mut self, result: String) {
         self.fail_result = Some(result);
+        self.ok_result = None;
     }
 
     pub fn set_ok_result(&mut self, result: String) {
@@ -28,15 +42,21 @@ impl EventDurationTracker {
         self.ignore_this_event = false;
     }
 
-    pub fn add_tag(&mut self, key: String, value: String) {
+    pub fn add_tag(
+        mut self,
+        key: impl Into<StrOrString<'static>>,
+        value: impl Into<StrOrString<'static>>,
+    ) -> Self {
         if self.tags.is_none() {
             self.tags = Some(Vec::new());
         }
 
-        self.tags
-            .as_mut()
-            .unwrap()
-            .push(TelemetryEventTag { key, value });
+        self.tags.as_mut().unwrap().push(TelemetryEventTag {
+            key: key.into().to_string(),
+            value: value.into().to_string(),
+        });
+
+        self
     }
 }
 
