@@ -1,13 +1,13 @@
 [package]
 name = "my-telemetry-writer"
-version = "1.2.0"
+version = "1.2.1"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 my-telemetry-core = { path = "../my-telemetry-core" }
-rust-extensions = { tag = "0.1.4", git = "https://github.com/MyJetTools/rust-extensions.git", features = [
+rust-extensions = { tag = "0.1.5", git = "https://github.com/MyJetTools/rust-extensions.git", features = [
     "with-tokio",
 ] }
 
