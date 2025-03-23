@@ -1,73 +1,64 @@
-use std::{sync::Arc, time::Duration};
+use std::time::Duration;
 
 use my_telemetry_core::TelemetryEvent;
 use tokio::sync::Mutex;
 use tonic::{transport::Channel, Request};
 
-use crate::{
-    writer_grpc::{
-        telemetry_writer_client::TelemetryWriterClient, EventGrpcTag, TelemetryGrpcEvent,
-    },
-    MyTelemetrySettings,
+use crate::writer_grpc::{
+    telemetry_writer_client::TelemetryWriterClient, EventGrpcTag, TelemetryGrpcEvent,
 };
 
 const GRPC_TIMEOUT: Duration = Duration::from_secs(3);
 
 pub struct GrpcClient {
-    settings: Arc<dyn MyTelemetrySettings + Send + Sync + 'static>,
     channel: Mutex<Option<TelemetryWriterClient<Channel>>>,
 }
 
 impl GrpcClient {
-    pub fn new(settings: Arc<dyn MyTelemetrySettings + Send + Sync + 'static>) -> Self {
+    pub fn new() -> Self {
         Self {
             channel: Mutex::new(None),
-            settings,
         }
     }
 
-    pub async fn is_grpc(&self) -> bool {
+    pub async fn is_grpc(&self, url: &str) -> bool {
         let mut write_access = self.channel.lock().await;
 
         if let Some(channel) = write_access.as_mut() {
             return ping(channel).await;
         }
 
-        let url = self.settings.get_telemetry_url().await;
+        let telemetry_client = create_channel(url.to_string()).await;
 
-        if let Some(url) = url {
-            let telemetry_client = create_channel(url).await;
-
-            if telemetry_client.is_none() {
-                return false;
-            }
-
-            let mut telemetry_client = telemetry_client.unwrap();
-
-            let result = ping(&mut telemetry_client).await;
-            if result {
-                *write_access = Some(telemetry_client);
-            }
-
-            return result;
+        if telemetry_client.is_none() {
+            return false;
         }
 
-        false
+        let mut telemetry_client = telemetry_client.unwrap();
+
+        let result = ping(&mut telemetry_client).await;
+        if result {
+            *write_access = Some(telemetry_client);
+        }
+
+        return result;
     }
 
-    pub async fn write_events(&self, service_name: &str, to_write: Vec<TelemetryEvent>) -> bool {
+    pub async fn write_events(
+        &self,
+        service_name: &str,
+        url: String,
+        to_write: Vec<TelemetryEvent>,
+    ) -> bool {
         let mut write_access = self.channel.lock().await;
 
         if write_access.is_none() {
-            let url = self.settings.get_telemetry_url().await;
-            if let Some(url) = url {
-                let channel = create_channel(url).await;
-                if channel.is_none() {
-                    return false;
-                }
-
-                *write_access = channel;
+            let channel = create_channel(url).await;
+            if channel.is_none() {
+                return false;
             }
+
+            *write_access = channel;
         }
 
         let grpc_channel = write_access.as_mut().unwrap();

@@ -62,13 +62,13 @@ impl TelemetryTimer {
         Self {
             app_name,
             write_mode: Arc::new(WriteModeKeeper::new()),
-            grpc_client: GrpcClient::new(settings.clone()),
+            grpc_client: GrpcClient::new(),
             settings,
         }
     }
 
-    async fn detect_write_mode(&self) {
-        if self.grpc_client.is_grpc().await {
+    async fn detect_write_mode(&self, url: &str) {
+        if self.grpc_client.is_grpc(url).await {
             self.write_mode.set_write_mode(WriteMode::Grpc);
             return;
         }
@@ -80,11 +80,24 @@ impl TelemetryTimer {
 #[async_trait::async_trait]
 impl MyTimerTick for TelemetryTimer {
     async fn tick(&self) {
+        let url = self.settings.get_telemetry_url().await;
+
+        if url.is_none() {
+            let mut write_access = my_telemetry_core::TELEMETRY_INTERFACE
+                .telemetry_collector
+                .lock()
+                .await;
+            write_access.clear_events();
+            return;
+        }
+
+        let url = url.unwrap();
+
         let to_write = {
             let write_mode = self.write_mode.get_write_mode();
 
             if write_mode.is_unknown() {
-                self.detect_write_mode().await;
+                self.detect_write_mode(url.as_str()).await;
             }
 
             let mut write_access = my_telemetry_core::TELEMETRY_INTERFACE
@@ -108,25 +121,21 @@ impl MyTimerTick for TelemetryTimer {
             WriteMode::Grpc => {
                 if !self
                     .grpc_client
-                    .write_events(self.app_name.as_str(), to_write)
+                    .write_events(self.app_name.as_str(), url, to_write)
                     .await
                 {
                     self.write_mode.set_write_mode(WriteMode::Unknown);
                 }
             }
             WriteMode::Http => {
-                let url = self.settings.get_telemetry_url().await;
-
-                if let Some(url) = url {
-                    if !crate::http_writer::write_as_http(
-                        url.as_str(),
-                        self.app_name.as_str(),
-                        to_write,
-                    )
-                    .await
-                    {
-                        self.write_mode.set_write_mode(WriteMode::Unknown);
-                    }
+                if !crate::http_writer::write_as_http(
+                    url.as_str(),
+                    self.app_name.as_str(),
+                    to_write,
+                )
+                .await
+                {
+                    self.write_mode.set_write_mode(WriteMode::Unknown);
                 }
             }
         }

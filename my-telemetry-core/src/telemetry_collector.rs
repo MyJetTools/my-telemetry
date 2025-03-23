@@ -37,4 +37,8 @@ impl TelemetryCollector {
 
         self.events_to_publish.take()
     }
+
+    pub fn clear_events(&mut self) {
+        self.events_to_publish = None;
+    }
 }
