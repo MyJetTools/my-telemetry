@@ -1,6 +1,6 @@
 [package]
 name = "my-telemetry-writer"
-version = "1.2.1"
+version = "1.2.2"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -18,7 +18,7 @@ serde_derive = "*"
 serde_json = "*"
 
 tokio = { version = "*", features = ["full"] }
-tonic = { version = "0.12", features = ["tls", "tls-roots", "prost"] }
+tonic = { version = "0.13", features = ["prost"] }
 prost = "*"
 prost-types = "*"
 futures-core = "*"
@@ -26,5 +26,5 @@ futures = "*"
 futures-util = "*"
 
 [build-dependencies]
-ci-utils = { git = "https://github.com/MyJetTools/ci-utils.git", tag = "0.1.1" }
-tonic-build = "0.12"
+ci-utils = { git = "https://github.com/MyJetTools/ci-utils.git", tag = "0.1.2" }
+tonic-build = "0.13"
