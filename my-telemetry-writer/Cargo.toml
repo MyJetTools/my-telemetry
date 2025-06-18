@@ -17,8 +17,8 @@ serde = "*"
 serde_derive = "*"
 serde_json = "*"
 
-tokio = { version = "*", features = ["full"] }
-tonic = { version = "0.13", features = ["prost"] }
+tokio = { version = "*" }
+tonic = { version = "0.13" }
 prost = "0.13"
 prost-types = "0.13"
 futures-core = "*"
