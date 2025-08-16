@@ -34,12 +34,10 @@ pub async fn write_as_http(url: &str, app_name: &str, to_write: Vec<TelemetryEve
         json_model.push(json_item);
     }
 
-    let body = serde_json::to_vec(&json_model).unwrap();
-
     let flurl = flurl::FlUrl::new(url)
         .append_path_segment("api")
         .append_path_segment("add")
-        .post(Some(body))
+        .post(flurl::body::FlUrlBody::as_json(&json_model))
         .await;
 
     if let Err(err) = flurl {
