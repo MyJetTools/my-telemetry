@@ -16,16 +16,14 @@ pub struct TelemetryEventTag {
     pub value: String,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct TelemetryEventTagsBuilder {
-    pub tags: Option<Vec<TelemetryEventTag>>,
+    pub tags: Vec<TelemetryEventTag>,
 }
 
 impl TelemetryEventTagsBuilder {
     pub fn new() -> Self {
-        Self {
-            tags: Some(Vec::new()),
-        }
+        Self { tags: Vec::new() }
     }
 
     pub fn add_as_ref(
@@ -33,10 +31,7 @@ impl TelemetryEventTagsBuilder {
         key: impl Into<StrOrString<'static>>,
         value: impl Into<StrOrString<'static>>,
     ) {
-        if self.tags.is_none() {
-            self.tags = Some(Vec::new());
-        }
-        self.tags.as_mut().unwrap().push(TelemetryEventTag {
+        self.tags.push(TelemetryEventTag {
             key: key.into().into(),
             value: value.into().into(),
         });
@@ -56,12 +51,15 @@ impl TelemetryEventTagsBuilder {
     }
 
     pub fn build(self) -> Option<Vec<TelemetryEventTag>> {
-        self.tags
+        if self.tags.is_empty() {
+            return None;
+        }
+        Some(self.tags)
     }
 
     pub fn take_tags(&mut self) -> Self {
         Self {
-            tags: self.tags.take(),
+            tags: std::mem::take(&mut self.tags),
         }
     }
 }
