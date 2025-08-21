@@ -12,19 +12,23 @@ rust-extensions = { tag = "0.1.5", git = "https://github.com/MyJetTools/rust-ext
 ] }
 
 flurl = { tag = "0.6.1", git = "https://github.com/MyJetTools/fl-url.git" }
+
+
 async-trait = "*"
 serde = "*"
 serde_derive = "*"
 serde_json = "*"
 
 tokio = { version = "*" }
-tonic = { version = "0.13" }
-prost = "0.13"
-prost-types = "0.13"
+
+tonic = { version = "*" }
+tonic-prost = "*"
+prost = "*"
+
 futures-core = "*"
 futures = "*"
 futures-util = "*"
 
 [build-dependencies]
 #ci-utils = { git = "https://github.com/MyJetTools/ci-utils.git", tag = "0.1.2" }
-tonic-build = "0.13"
+tonic-prost-build = { version = "*" }
