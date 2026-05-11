@@ -85,8 +85,7 @@ impl MyTimerTick for TelemetryTimer {
         if url.is_none() {
             let mut write_access = my_telemetry_core::TELEMETRY_INTERFACE
                 .telemetry_collector
-                .lock()
-                .await;
+                .lock();
             write_access.clear_events();
             return;
         }
@@ -102,8 +101,7 @@ impl MyTimerTick for TelemetryTimer {
 
             let mut write_access = my_telemetry_core::TELEMETRY_INTERFACE
                 .telemetry_collector
-                .lock()
-                .await;
+                .lock();
 
             write_access.get_events()
         };
