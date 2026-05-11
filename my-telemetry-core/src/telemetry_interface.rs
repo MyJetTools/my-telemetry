@@ -1,7 +1,7 @@
 use std::sync::atomic::AtomicBool;
 
+use parking_lot::Mutex;
 use rust_extensions::date_time::DateTimeAsMicroseconds;
-use tokio::sync::Mutex;
 
 use crate::{
     my_telemetry_event::TelemetryEventTag, MyTelemetryContext, TelemetryCollector, TelemetryEvent,
@@ -25,7 +25,7 @@ impl TelemetryInterface {
             .load(std::sync::atomic::Ordering::Relaxed)
     }
 
-    pub async fn write_success(
+    pub fn write_success(
         &self,
         ctx: &MyTelemetryContext,
         started: DateTimeAsMicroseconds,
@@ -48,7 +48,7 @@ impl TelemetryInterface {
                     fail: None,
                     tags,
                 };
-                let mut write_access = self.telemetry_collector.lock().await;
+                let mut write_access = self.telemetry_collector.lock();
                 write_access.write(event)
             }
             MyTelemetryContext::Multiple(ids) => {
@@ -79,7 +79,7 @@ impl TelemetryInterface {
 
                 events.push(event);
 
-                let mut write_access = self.telemetry_collector.lock().await;
+                let mut write_access = self.telemetry_collector.lock();
                 write_access.write_events(events)
             }
 
@@ -87,7 +87,7 @@ impl TelemetryInterface {
         }
     }
 
-    pub async fn write_fail(
+    pub fn write_fail(
         &self,
         ctx: &MyTelemetryContext,
         started: DateTimeAsMicroseconds,
@@ -110,7 +110,7 @@ impl TelemetryInterface {
                     fail: Some(fail),
                     tags,
                 };
-                let mut write_access = self.telemetry_collector.lock().await;
+                let mut write_access = self.telemetry_collector.lock();
                 write_access.write(event)
             }
             MyTelemetryContext::Multiple(ids) => {
@@ -141,7 +141,7 @@ impl TelemetryInterface {
 
                 events.push(event);
 
-                let mut write_access = self.telemetry_collector.lock().await;
+                let mut write_access = self.telemetry_collector.lock();
                 write_access.write_events(events)
             }
             MyTelemetryContext::Empty => {}
@@ -149,12 +149,12 @@ impl TelemetryInterface {
     }
 
     pub async fn write_telemetry_event(&self, event: TelemetryEvent) {
-        let mut write_access = self.telemetry_collector.lock().await;
+        let mut write_access = self.telemetry_collector.lock();
         write_access.write(event)
     }
 
     pub async fn write_telemetry_events(&self, events: Vec<TelemetryEvent>) {
-        let mut write_access = self.telemetry_collector.lock().await;
+        let mut write_access = self.telemetry_collector.lock();
 
         for event in events {
             write_access.write(event);
