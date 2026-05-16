@@ -1,0 +1,54 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: ${{ matrix.os }}
+
+      - name: Install protoc
+        uses: arduino/setup-protoc@v3
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+      # aws-lc-sys (pulled in transitively via tonic -> rustls -> aws-lc-rs)
+      # builds OK on Windows because the `prebuilt-nasm` feature is already
+      # enabled by rustls — so NASM does not need to be installed.
+      # CMake, MSVC and Perl are pre-installed on windows-latest.
+
+      # openssl-sys (pulled in transitively via flurl -> my-tls -> openssl)
+      # needs OpenSSL libs on Windows. Install via vcpkg (pre-installed on the runner).
+      - name: Install OpenSSL (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          vcpkg install openssl:x64-windows-static-md
+          "OPENSSL_DIR=$env:VCPKG_INSTALLATION_ROOT\installed\x64-windows-static-md" | Out-File -FilePath $env:GITHUB_ENV -Append
+          "OPENSSL_STATIC=1" | Out-File -FilePath $env:GITHUB_ENV -Append
+          "OPENSSL_NO_VENDOR=1" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: cargo build (workspace)
+        run: cargo build --workspace --release
+
+      - name: cargo test --no-run (workspace)
+        run: cargo test --workspace --no-run
