@@ -37,7 +37,7 @@ pub async fn write_as_http(url: &str, app_name: &str, to_write: Vec<TelemetryEve
     let flurl = flurl::FlUrl::new(url)
         .append_path_segment("api")
         .append_path_segment("add")
-        .post(flurl::body::FlUrlBody::as_json(&json_model))
+        .post(flurl::body::HttpRequestBody::as_json(&json_model))
         .await;
 
     if let Err(err) = flurl {
