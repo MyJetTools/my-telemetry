@@ -1,6 +1,8 @@
 use std::{sync::Arc, time::Duration};
 
-use rust_extensions::{ApplicationStates, Logger, MyTimer, MyTimerTick, StrOrString};
+use rust_extensions::{
+    ApplicationStates, Logger, MyTimer, MyTimerTick, RepeatTimerIteration, StrOrString,
+};
 
 use crate::{
     grpc_writer::GrpcClient,
@@ -79,7 +81,7 @@ impl TelemetryTimer {
 
 #[async_trait::async_trait]
 impl MyTimerTick for TelemetryTimer {
-    async fn tick(&self) {
+    async fn tick(&self) -> RepeatTimerIteration {
         let url = self.settings.get_telemetry_url().await;
 
         if url.is_none() {
@@ -87,7 +89,7 @@ impl MyTimerTick for TelemetryTimer {
                 .telemetry_collector
                 .lock();
             write_access.clear_events();
-            return;
+            return RepeatTimerIteration::WithInterval;
         }
 
         let url = url.unwrap();
@@ -107,7 +109,7 @@ impl MyTimerTick for TelemetryTimer {
         };
 
         if to_write.is_none() {
-            return;
+            return RepeatTimerIteration::WithInterval;
         }
 
         let to_write = to_write.unwrap();
@@ -137,5 +139,7 @@ impl MyTimerTick for TelemetryTimer {
                 }
             }
         }
+
+        RepeatTimerIteration::WithInterval
     }
 }
