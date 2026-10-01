@@ -1,8 +1,6 @@
 use std::{sync::Arc, time::Duration};
 
-use rust_extensions::{
-    ApplicationStates, Logger, MyTimer, MyTimerTick, RepeatTimerIteration, StrOrString,
-};
+use rust_extensions::{Logger, MyTimer, MyTimerTick, RepeatTimerIteration, StrOrString};
 
 use crate::{
     grpc_writer::GrpcClient,
@@ -11,7 +9,6 @@ use crate::{
 };
 
 pub struct MyTelemetryWriter {
-    timer: MyTimer,
     telemetry_timer: Arc<TelemetryTimer>,
 }
 
@@ -20,23 +17,12 @@ impl MyTelemetryWriter {
         app_name: impl Into<StrOrString<'static>>,
         settings: Arc<dyn MyTelemetrySettings + Send + Sync + 'static>,
     ) -> Self {
-        let app_name = app_name.into();
-        let mut result = Self {
-            timer: MyTimer::new(Duration::from_secs(1)),
-            telemetry_timer: Arc::new(TelemetryTimer::new(settings, app_name)),
-        };
-
-        result
-            .timer
-            .register_timer("TelemetryWriterTimer", result.telemetry_timer.clone());
-        result
+        Self {
+            telemetry_timer: Arc::new(TelemetryTimer::new(settings, app_name.into())),
+        }
     }
 
-    pub fn start(
-        &self,
-        app_states: Arc<dyn ApplicationStates + Send + Sync + 'static>,
-        logger: Arc<dyn Logger + Send + Sync + 'static>,
-    ) {
+    pub fn start(&self, logger: Arc<dyn Logger + Send + Sync + 'static>) {
         if my_telemetry_core::TELEMETRY_INTERFACE.is_telemetry_set_up() {
             return;
         }
@@ -44,7 +30,10 @@ impl MyTelemetryWriter {
         my_telemetry_core::TELEMETRY_INTERFACE
             .writer_is_set
             .store(true, std::sync::atomic::Ordering::SeqCst);
-        self.timer.start(app_states, logger);
+
+        let mut timer = MyTimer::new(Duration::from_secs(1), logger);
+        timer.register_timer("TelemetryWriterTimer", self.telemetry_timer.clone());
+        timer.start();
         println!("Telemetry writer is started");
     }
 }
