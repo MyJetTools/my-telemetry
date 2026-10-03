@@ -47,18 +47,17 @@ impl MyTelemetryContext {
         }
     }
 
+    /// Merges the contexts into one. No contexts at all give `Empty`.
     pub fn compile<'s, TIter: Iterator<Item = &'s MyTelemetryContext>>(items: TIter) -> Self {
-        let mut result: Option<MyTelemetryContext> = None;
+        // Merging into `Empty` takes the first context as it is, and the rest are
+        // merged into it from there.
+        let mut result = MyTelemetryContext::Empty;
 
         for item in items {
-            if let Some(ctx) = &mut result {
-                ctx.merge_process(item);
-            } else {
-                result = Some(item.clone());
-            }
+            result.merge_process(item);
         }
 
-        result.unwrap()
+        result
     }
 
     pub fn restore(process_id: i64) -> Self {
@@ -195,6 +194,29 @@ mod tests {
     #[test]
     fn iterating_a_multiple_context_gives_every_id_once() {
         let ctx = MyTelemetryContext::Multiple(vec![1, 2, 3]);
+        assert_eq!((&ctx).into_iter().collect::<Vec<_>>(), vec![1, 2, 3]);
+    }
+
+    #[test]
+    fn compiling_no_contexts_gives_empty() {
+        let ctx = MyTelemetryContext::compile(std::iter::empty());
+        assert!(matches!(ctx, MyTelemetryContext::Empty));
+    }
+
+    #[test]
+    fn compiling_contexts_merges_their_ids() {
+        let one = [MyTelemetryContext::Single(1)];
+        assert!(matches!(
+            MyTelemetryContext::compile(one.iter()),
+            MyTelemetryContext::Single(1)
+        ));
+
+        let several = [
+            MyTelemetryContext::Single(1),
+            MyTelemetryContext::Empty,
+            MyTelemetryContext::Multiple(vec![2, 3]),
+        ];
+        let ctx = MyTelemetryContext::compile(several.iter());
         assert_eq!((&ctx).into_iter().collect::<Vec<_>>(), vec![1, 2, 3]);
     }
 

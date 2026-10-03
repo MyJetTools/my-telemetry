@@ -189,9 +189,11 @@ impl MyTelemetryCompiler {
         }
     }
 
+    /// The contexts added so far as one. Nothing added, or only `Empty` ones, gives
+    /// `Empty`.
     pub fn compile(self) -> MyTelemetryContext {
-        if self.items.len() == 0 {
-            panic!("Can not compile telemetry context with no items");
+        if self.items.is_empty() {
+            return MyTelemetryContext::Empty;
         }
 
         if self.items.len() == 1 {
@@ -225,6 +227,31 @@ mod tests {
             .into_iter()
             .map(|event| event.process_id)
             .collect()
+    }
+
+    #[test]
+    fn the_compiler_gives_empty_when_nothing_names_a_process() {
+        assert!(matches!(
+            MyTelemetryCompiler::new().compile(),
+            MyTelemetryContext::Empty
+        ));
+
+        let mut compiler = MyTelemetryCompiler::new();
+        compiler.add(&MyTelemetryContext::Empty);
+        assert!(matches!(compiler.compile(), MyTelemetryContext::Empty));
+    }
+
+    #[test]
+    fn the_compiler_collects_the_ids() {
+        let mut compiler = MyTelemetryCompiler::new();
+        compiler.add(&MyTelemetryContext::Single(1));
+        assert!(matches!(compiler.compile(), MyTelemetryContext::Single(1)));
+
+        let mut compiler = MyTelemetryCompiler::new();
+        compiler.add(&MyTelemetryContext::Single(1));
+        compiler.add(&MyTelemetryContext::Multiple(vec![2, 3]));
+        let ctx = compiler.compile();
+        assert!(matches!(&ctx, MyTelemetryContext::Multiple(ids) if ids == &vec![1, 2, 3]));
     }
 
     #[test]
