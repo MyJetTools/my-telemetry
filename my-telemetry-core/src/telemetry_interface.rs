@@ -52,10 +52,15 @@ impl TelemetryInterface {
                 write_access.write(event)
             }
             MyTelemetryContext::Multiple(ids) => {
+                // An empty list names no process: nothing to write, as for `Empty`.
+                let Some((last_id, other_ids)) = ids.split_last() else {
+                    return;
+                };
+
                 let mut events = Vec::with_capacity(ids.len());
-                for i in 0..ids.len() - 1 {
+                for process_id in other_ids {
                     let event = TelemetryEvent {
-                        process_id: *ids.get(i).unwrap(),
+                        process_id: *process_id,
                         started: started.unix_microseconds,
                         finished: DateTimeAsMicroseconds::now().unix_microseconds,
                         data: data.to_string(),
@@ -68,7 +73,7 @@ impl TelemetryInterface {
                 }
 
                 let event = TelemetryEvent {
-                    process_id: *ids.get(ids.len() - 1).unwrap(),
+                    process_id: *last_id,
                     started: started.unix_microseconds,
                     finished: DateTimeAsMicroseconds::now().unix_microseconds,
                     data: data,
@@ -114,10 +119,15 @@ impl TelemetryInterface {
                 write_access.write(event)
             }
             MyTelemetryContext::Multiple(ids) => {
+                // An empty list names no process: nothing to write, as for `Empty`.
+                let Some((last_id, other_ids)) = ids.split_last() else {
+                    return;
+                };
+
                 let mut events = Vec::with_capacity(ids.len());
-                for i in 0..ids.len() - 1 {
+                for process_id in other_ids {
                     let event = TelemetryEvent {
-                        process_id: *ids.get(i).unwrap(),
+                        process_id: *process_id,
                         started: started.unix_microseconds,
                         finished: DateTimeAsMicroseconds::now().unix_microseconds,
                         data: data.clone(),
@@ -130,7 +140,7 @@ impl TelemetryInterface {
                 }
 
                 let event = TelemetryEvent {
-                    process_id: *ids.get(ids.len() - 1).unwrap(),
+                    process_id: *last_id,
                     started: started.unix_microseconds,
                     finished: DateTimeAsMicroseconds::now().unix_microseconds,
                     data,
@@ -189,5 +199,78 @@ impl MyTelemetryCompiler {
         }
 
         return MyTelemetryContext::Multiple(self.items);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::sync::atomic::Ordering;
+
+    use rust_extensions::date_time::DateTimeAsMicroseconds;
+
+    use super::*;
+
+    fn interface_with_writer() -> TelemetryInterface {
+        let interface = TelemetryInterface::new();
+        interface.writer_is_set.store(true, Ordering::Relaxed);
+        interface
+    }
+
+    fn written_process_ids(interface: &TelemetryInterface) -> Vec<i64> {
+        interface
+            .telemetry_collector
+            .lock()
+            .get_events()
+            .unwrap_or_default()
+            .into_iter()
+            .map(|event| event.process_id)
+            .collect()
+    }
+
+    #[test]
+    fn an_empty_multiple_context_writes_nothing() {
+        let interface = interface_with_writer();
+        let ctx = MyTelemetryContext::Multiple(vec![]);
+
+        interface.write_success(
+            &ctx,
+            DateTimeAsMicroseconds::now(),
+            "data".to_string(),
+            "ok".to_string(),
+            None,
+        );
+        interface.write_fail(
+            &ctx,
+            DateTimeAsMicroseconds::now(),
+            "data".to_string(),
+            "failed".to_string(),
+            None,
+        );
+
+        assert!(written_process_ids(&interface).is_empty());
+    }
+
+    #[test]
+    fn a_multiple_context_writes_one_event_per_process() {
+        let interface = interface_with_writer();
+        let ctx = MyTelemetryContext::Multiple(vec![1, 2, 3]);
+
+        interface.write_success(
+            &ctx,
+            DateTimeAsMicroseconds::now(),
+            "data".to_string(),
+            "ok".to_string(),
+            None,
+        );
+        assert_eq!(written_process_ids(&interface), vec![1, 2, 3]);
+
+        interface.write_fail(
+            &ctx,
+            DateTimeAsMicroseconds::now(),
+            "data".to_string(),
+            "failed".to_string(),
+            None,
+        );
+        assert_eq!(written_process_ids(&interface), vec![1, 2, 3]);
     }
 }

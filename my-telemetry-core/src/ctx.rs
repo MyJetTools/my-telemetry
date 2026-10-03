@@ -169,8 +169,9 @@ impl<'s> Iterator for TelemetryContextIterator<'s> {
                 return Some(result);
             }
             MyTelemetryContext::Multiple(ids) => {
-                let result = ids.get(self.pos)?;
-                return Some(*result);
+                let result = *ids.get(self.pos)?;
+                self.pos += 1;
+                return Some(result);
             }
             MyTelemetryContext::Empty => None,
         }
@@ -184,5 +185,29 @@ impl Into<MyTelemetryContext> for Option<&MyTelemetryContext> {
         } else {
             MyTelemetryContext::Single(DateTimeAsMicroseconds::now().unix_microseconds).into()
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn iterating_a_multiple_context_gives_every_id_once() {
+        let ctx = MyTelemetryContext::Multiple(vec![1, 2, 3]);
+        assert_eq!((&ctx).into_iter().collect::<Vec<_>>(), vec![1, 2, 3]);
+    }
+
+    #[test]
+    fn iterating_single_and_empty_contexts() {
+        assert_eq!(
+            (&MyTelemetryContext::Single(7)).into_iter().collect::<Vec<_>>(),
+            vec![7]
+        );
+        assert!((&MyTelemetryContext::Empty).into_iter().next().is_none());
+        assert!((&MyTelemetryContext::Multiple(vec![]))
+            .into_iter()
+            .next()
+            .is_none());
     }
 }
